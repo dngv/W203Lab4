@@ -6,19 +6,8 @@ date: "November 23, 2016"
 output: pdf_document
 ---
 
-# Introduction
-
-This is a group lab.  You may work in teams of 2 or 3.
-
-The file bwght\_w203.RData contains data from the National Center for Health Statistics and from birth certificates.  Your team has been hired by a health advocacy group to study this data and help them understand whether prenatal care improves health outcomes for newborn infants.
-
-The file includes a birthweight variable.  Additonally, the one- and five-minute APGAR scores are included.  These are measures of the well being of infants just after birth.
-
-Variable descriptions are provided as follows.
-
 ```{r}
 load("~/Downloads/common/W203/Lab_4/bwght_w203.RData")
-desc
 library(reshape2)
 library(ggplot2)
 ```
@@ -27,10 +16,6 @@ library(ggplot2)
 
 Prepare a report addressing the question of whether prenatal care improves newborn health outcomes.
 
-A successful submission will include
-
-1. A brief introduction
-    
 ## Introduction
     According to the National Institutes of Health, "prenatal care shoudl begin as soon as a woman knows or suspects she is pregnant... prenatal care is important to help promote a healthy pregnancy. Women who do not seek prenatal care are three times as likely to deliver a low birth weight infant, and lack of prenatal care can also increase the risk of infant death." The following statistical analysis aims to substantiate these claims using a classical linear regression model.
 
