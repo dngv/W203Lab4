@@ -1,0 +1,110 @@
+---
+title: "Lab 4: Does Prenatal Care Improve Infant Health?"
+author: "w203: Statistics for Data Science"
+
+date: "November 23, 2016"
+output: pdf_document
+---
+
+# Introduction
+
+This is a group lab.  You may work in teams of 2 or 3.
+
+The file bwght\_w203.RData contains data from the National Center for Health Statistics and from birth certificates.  Your team has been hired by a health advocacy group to study this data and help them understand whether prenatal care improves health outcomes for newborn infants.
+
+The file includes a birthweight variable.  Additonally, the one- and five-minute APGAR scores are included.  These are measures of the well being of infants just after birth.
+
+Variable descriptions are provided as follows.
+
+```{r}
+load("~/Downloads/common/W203/Lab_4/bwght_w203.RData")
+desc
+library(reshape2)
+library(ggplot2)
+```
+
+# Assignment
+
+Prepare a report addressing the question of whether prenatal care improves newborn health outcomes.
+
+A successful submission will include
+
+1. A brief introduction
+    
+## Introduction
+    According to the National Institutes of Health, "prenatal care shoudl begin as soon as a woman knows or suspects she is pregnant... prenatal care is important to help promote a healthy pregnancy. Women who do not seek prenatal care are three times as likely to deliver a low birth weight infant, and lack of prenatal care can also increase the risk of infant death." The following statistical analysis aims to substantiate these claims using a classical linear regression model.
+
+https://www.nichd.nih.gov/health/topics/preconceptioncare/conditioninfo/Pages/default.aspx
+
+## EDA 
+2. A model building process, supported by exploratory analysis.  Your EDA should be interspersed with, and support, your modeling decisions.  In particular, you should use exploratory techniques to address
+
+```{r}
+# non-indicator vars:
+ggplot(melt(data[,-(12:20)]), aes(x=value)) +
+    geom_histogram(bins=30) +
+    facet_wrap(~variable, scales='free') +
+    ggtitle('Histograms of non-indicator variables')
+
+
+# indicator vars
+ggplot(melt(data[,12:20]), aes(x=factor(value))) +
+    stat_count() +
+    facet_wrap(~variable, scales='free') +
+    ggtitle('Count of indicator variables')
+
+
+```
+
+- What transformations to apply to variables and what new variables should be created.
+
+The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables $magesq$ and $npvissq$ appear more positively skewed their originals. The $lbwght$ variable is also more negatively skewed than the non-transformed $bwght$. The education variables $meduc$ and $feduc$ have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately.
+
+Among the indicator variables, there are far more "normal" birthweights than low or very low birthweights.
+
+```{r}
+
+```
+
+
+- What variables should be included in each model
+
+APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is better indicative of the baby's overall health. The $fmaps$ variable seems to be the appropriate dependent variable that describes infant health.
+
+- Whether model assumptions are met
+
+CLM 1-6
+
+
+
+3. A minimum of three model specifications.  In particular, you should include
+
+- One model with only the explanatory variables of key interest.
+
+```{r}
+mod1<-lm(fmaps ~ npvis, data=data)
+summary(mod1)
+plot(mod1)
+
+```
+
+
+- One model that includes only covariates that you believe increase the accuracy of your results without introducing bias.
+
+
+- One model that includes the previous covariates, but also covariates that may be problematic for one reason or another.
+
+
+4. For your first model, a detailed assessment of the 6 CLM assumptions.  For additional models, you should check all assumptions, but only highlight major differences from your first model in your report.
+
+
+5. A well-formatted regression table summarizing your model results.  Make sure that standard errors presented in this table are valid.  Also be sure to comment on both statistical and practical significance.
+
+
+6. A discussion of whether your results can be interpretted causally.  In particular, include a discussion of what variables are not included in your analysis and the likely direction of omitted variable bias.  Also include a discussion of which included variables may bias your results by absorbing some of the causal effect of prenatal care.
+
+
+7. A brief conclusion with a few high-level takeaways.
+
+
+Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code.
