@@ -1,13 +1,14 @@
 ---
-title: "Lab 4: Does Prenatal Care Improve Infant Health?"
-author: "w203: Statistics for Data Science"
-
+title: 'Lab 4: Does Prenatal Care Improve Infant Health?'
+author: 'w203: Statistics for Data Science'
 date: "November 23, 2016"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r}
-load("~/Downloads/common/W203/Lab_4/bwght_w203.RData")
+load("bwght_w203.RData")
 library(reshape2)
 library(ggplot2)
 ```
@@ -25,15 +26,27 @@ https://www.nichd.nih.gov/health/topics/preconceptioncare/conditioninfo/Pages/de
 2. A model building process, supported by exploratory analysis.  Your EDA should be interspersed with, and support, your modeling decisions.  In particular, you should use exploratory techniques to address
 
 ```{r}
+# race
+race <- c(1,2,NA,3)
+ilbw <- c(1,2,3)
+data$mrace <- (race[apply(t(t(data[,c('mwhte','mblck','moth')])*c(1,2,4)),1,sum)])
+data$frace <- (race[apply(t(t(data[,c('fwhte','fblck','foth')])*c(1,2,4)),1,sum)])
+data$ilbw <- (ilbw[1+apply(data[,c('lbw','vlbw')],1,sum)])
+is.factor.var <- c(14,24:26)
+is.value.var <- c(1:11,21:23)
+```
+
+```{r}
+
 # non-indicator vars:
-ggplot(melt(data[,-(12:20)]), aes(x=value)) +
+ggplot(melt(data[,is.value.var]), aes(x=value)) +
     geom_histogram(bins=30) +
     facet_wrap(~variable, scales='free') +
     ggtitle('Histograms of non-indicator variables')
 
 
 # indicator vars
-ggplot(melt(data[,12:20]), aes(x=factor(value))) +
+ggplot(melt(data[,is.factor.var]), aes(x=factor(value))) +
     stat_count() +
     facet_wrap(~variable, scales='free') +
     ggtitle('Count of indicator variables')
@@ -41,9 +54,10 @@ ggplot(melt(data[,12:20]), aes(x=factor(value))) +
 
 ```
 
+
 - What transformations to apply to variables and what new variables should be created.
 
-The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables $magesq$ and $npvissq$ appear more positively skewed their originals. The $lbwght$ variable is also more negatively skewed than the non-transformed $bwght$. The education variables $meduc$ and $feduc$ have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately.
+The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables `magesq` and `npvissq` appear more positively skewed their originals. The `lbwght` variable is also more negatively skewed than the non-transformed `bwght`. The education variables `meduc` and `feduc` have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately.
 
 Among the indicator variables, there are far more "normal" birthweights than low or very low birthweights.
 
@@ -67,7 +81,7 @@ CLM 1-6
 - One model with only the explanatory variables of key interest.
 
 ```{r}
-mod1<-lm(fmaps ~ npvis, data=data)
+mod1<-lm(fmaps ~ npvis + monpre, data=data)
 summary(mod1)
 plot(mod1)
 
