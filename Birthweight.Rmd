@@ -191,8 +191,6 @@ APGAR score is an aggregate rating of heart rate, respiratory effort, muscle ton
 mod1<-lm(fmaps ~ npvis + monpre, data=data)
 summary(mod1)
 plot(mod1)
-
-
 ```
 
 
