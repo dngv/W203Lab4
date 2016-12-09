@@ -9,6 +9,8 @@ output: pdf_document
 ```{r}
 load("bwght_w203.RData")
 desc
+library(sandwich)
+library(stargazer)
 library(reshape2)
 library(ggplot2)
 library(data.table)
