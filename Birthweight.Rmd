@@ -7,9 +7,11 @@ output: pdf_document
 ---
 
 ```{r}
-load("~/Downloads/common/W203/Lab_4/bwght_w203.RData")
+load("bwght_w203.RData")
+desc
 library(reshape2)
 library(ggplot2)
+library(data.table)
 ```
 
 # Assignment
@@ -38,27 +40,112 @@ ggplot(melt(data[,12:20]), aes(x=factor(value))) +
     facet_wrap(~variable, scales='free') +
     ggtitle('Count of indicator variables')
 
+bwdt<-as.data.table(data)
+bwdt[order(fmaps),.N,by=fmaps]
+bwdt[order(cigs),.N,by=cigs]
 
 ```
 
 - What transformations to apply to variables and what new variables should be created.
 
-The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables $magesq$ and $npvissq$ appear more positively skewed their originals. The $lbwght$ variable is also more negatively skewed than the non-transformed $bwght$. The education variables $meduc$ and $feduc$ have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately.
+The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables $magesq$ and $npvissq$ appear more positively skewed their originals. The $lbwght$ variable is also more negatively skewed than the non-transformed $bwght$. The education variables $meduc$ and $feduc$ have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately. 
 
-Among the indicator variables, there are far more "normal" birthweights than low or very low birthweights.
+Among the indicator variables, there are far more "normal" birthweights than low or very low birthweights, and more white mothers and fathers than black or other.
 
 ```{r}
+bwdt[,mrace:=factor(mwhte*1+mblck*2+moth*3, levels=c(1, 2, 3), labels=c('white', 'black', 'other'))]
+bwdt[,frace:=factor(fwhte*1+fblck*2+foth*3, levels=c(1, 2, 3), labels=c('white', 'black', 'other'))]
+
+# fmaps regressed on...
+
+# model 1 -- include npvissq to model diminishing return
+mod1<-lm(fmaps ~ npvis + npvissq, data=bwdt)
+plot(mod1, which=1)
+plot(mod1, which=2)
+plot(mod1, which=3)
+plot(mod1, which=5)
+summary(mod1)
+
+# model 2 -- add avg cigs (some cases > 0), months of prenatal care
+mod2<-lm(fmaps ~ npvis + npvissq + monpre + cigs, data=bwdt)
+plot(mod2, which=1)
+plot(mod2, which=2)
+plot(mod2, which=3)
+plot(mod2, which=5)
+summary(mod2)
+
+# model 3 -- add mother's age and age^2 for diminishing return, avg drink, baby gender
+mod3<-lm(fmaps ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
+plot(mod3, which=1)
+plot(mod3, which=2)
+plot(mod3, which=3)
+plot(mod3, which=5)
+summary(mod3)
+
+se.mod1 = sqrt(diag(vcovHC(mod1)))
+se.mod2 = sqrt(diag(vcovHC(mod2)))
+se.mod3 = sqrt(diag(vcovHC(mod3)))
+
+stargazer(mod1, mod2, mod3, type = "text",
+          se = list(se.mod1, se.mod2, se.mod3),
+          star.cutoffs = c(0.05, 0.01, 0.001))
+
+optimize(function(n){0.042*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
+optimize(function(n){0.045*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
+
+```
+
+
+
+```{r}
+# bwght regressed on...
+
+# model 1 -- include npvissq to model diminishing return
+mod1b<-lm(bwght ~ npvis + npvissq, data=bwdt)
+plot(mod1b, which=1)
+plot(mod1b, which=2)
+plot(mod1b, which=3)
+plot(mod1b, which=5)
+summary(mod1b)
+
+# model 2 -- add avg cigs (some cases > 0), months of prenatal care
+mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt)
+plot(mod2b, which=1)
+plot(mod2b, which=2)
+plot(mod2b, which=3)
+plot(mod2b, which=5)
+summary(mod2b)
+
+# model 3 -- add mother's age and age^2 for diminishing return, avg drink, baby gender
+mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
+plot(mod3b, which=1)
+plot(mod3b, which=2)
+plot(mod3b, which=3)
+plot(mod3b, which=5)
+summary(mod3b)
+
+se.mod1b = sqrt(diag(vcovHC(mod1b)))
+se.mod2b = sqrt(diag(vcovHC(mod2b)))
+se.mod3b = sqrt(diag(vcovHC(mod3b)))
+
+stargazer(mod1b, mod2b, mod3b, type = "text",
+          se = list(se.mod1b, se.mod2b, se.mod3b),
+          star.cutoffs = c(0.05, 0.01, 0.001))
 
 ```
 
 
 - What variables should be included in each model
 
-APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is better indicative of the baby's overall health. The $fmaps$ variable seems to be the appropriate dependent variable that describes infant health.
+APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is a better indicator of a baby's overall health than the one minute score. The $fmaps$ variable seems to be the appropriate dependent variable that describes infant health.
+
+
+```{r}
+
+
+```
 
 - Whether model assumptions are met
-
-CLM 1-6
 
 
 
@@ -67,9 +154,7 @@ CLM 1-6
 - One model with only the explanatory variables of key interest.
 
 ```{r}
-mod1<-lm(fmaps ~ npvis, data=data)
-summary(mod1)
-plot(mod1)
+
 
 ```
 
@@ -93,3 +178,4 @@ plot(mod1)
 
 
 Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code.
+
