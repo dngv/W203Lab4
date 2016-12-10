@@ -126,12 +126,13 @@ bwdt[,frace:=factor(fwhte*1+fblck*2+foth*3,
                     levels=c(1, 2, 3),
                     labels=c('white', 'black', 'other'))]
 ```
-```{r,fig.width=12,fig.align='center'}
-multiplot(cols=4,
+```{r,fig.width=12,fig.height=8,fig.align='center'}
+multiplot(cols=3,
   qplot(x=npvis, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
-  qplot(x=mage, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=meduc, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=npvissq, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
   qplot(x=feduc, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
-  qplot(x=meduc, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20))
+  qplot(x=mage, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20))
 )
 ```
 ```{r,fig.width=12,fig.align='center'}
@@ -141,6 +142,7 @@ multiplot(cols=2,
 )
 ```
 ```{r}
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 # fmaps regressed on...
 
@@ -179,6 +181,7 @@ stargazer(mod1, mod2, mod3, type = "text",
 optimize(function(n){0.042*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
 optimize(function(n){0.045*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
 
+par(par.orig)
 ```
 
 ```{r,fig.width=12,fig.align='center'}
@@ -190,6 +193,8 @@ multiplot(cols=4,
 )
 ```
 ```{r}
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
+
 # bwght regressed on...
 
 # model 1 -- include npvissq to model diminishing return
@@ -223,7 +228,7 @@ se.mod3b = sqrt(diag(vcovHC(mod3b)))
 stargazer(mod1b, mod2b, mod3b, type = "text",
           se = list(se.mod1b, se.mod2b, se.mod3b),
           star.cutoffs = c(0.05, 0.01, 0.001))
-
+par(par.orig)
 ```
 
 
@@ -247,7 +252,9 @@ APGAR score is an aggregate rating of heart rate, respiratory effort, muscle ton
 ```{r}
 mod1<-lm(fmaps ~ npvis + monpre, data=data)
 summary(mod1)
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
 plot(mod1)
+par(par.orig)
 ```
 
 
