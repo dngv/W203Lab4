@@ -50,13 +50,15 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 ```{r}
 load("bwght_w203.RData")
 desc
-suppressWarnings(library(car))
-suppressWarnings(library(sandwich))
+```
+```{r,warning=F,message=F}
+library(car)
+library(sandwich)
 ##  Hlavac, Marek (2015). stargazer: Well-Formatted Regression and Summary Statistics Tables.
-suppressWarnings(suppressMessages(library(stargazer)))
-suppressWarnings(library(reshape2))
-suppressWarnings(library(ggplot2))
-suppressWarnings(suppressMessages(library(data.table)))
+library(stargazer)
+library(reshape2)
+library(ggplot2)
+library(data.table)
 ```
 
 # Assignment
@@ -83,7 +85,6 @@ is.value.var <- c(1:11,21:23)
 ```
 
 ```{r}
-
 # non-indicator vars:
 ggplot(melt(data[,is.value.var]), aes(x=value)) +
     geom_histogram(bins=30) +
@@ -96,9 +97,12 @@ ggplot(melt(data[,is.factor.var]), aes(x=factor(value))) +
     stat_count() +
     facet_wrap(~variable, scales='free') +
     ggtitle('Count of indicator variables')
-
+```
+<!-- suppress loess warnings -->
+```{r,warning=F}
 scatterplotMatrix(data[,c('mage', 'meduc', 'monpre', 'npvis', 'fage', 'feduc', 'bwght', 'fmaps', 'omaps')])
-
+```
+```{r}
 bwdt<-as.data.table(data)
 bwdt[order(fmaps),.N,by=fmaps]
 bwdt[order(cigs),.N,by=cigs]
@@ -112,25 +116,31 @@ The non-indicator variables don't appear particularly conducive to log transform
 
 Among the indicator variables, there are far more "normal" birthweights than low or very low birthweights, and more white mothers and fathers than black or other.
 
-```{r}
+We create variables `mrace` and `frace` to summarize the races.
+
+```{r,results='hide'}
 bwdt[,mrace:=factor(mwhte*1+mblck*2+moth*3, 
                     levels=c(1, 2, 3),
                     labels=c('white', 'black', 'other'))]
 bwdt[,frace:=factor(fwhte*1+fblck*2+foth*3, 
                     levels=c(1, 2, 3),
                     labels=c('white', 'black', 'other'))]
-
+```
+```{r,fig.width=12,fig.align='center'}
 multiplot(cols=4,
-  qplot(x=npvis, y=fmaps, data=bwdt),
-  qplot(x=mage, y=fmaps, data=bwdt),
-  qplot(x=feduc, y=fmaps, data=bwdt),
-  qplot(x=meduc, y=fmaps, data=bwdt)
+  qplot(x=npvis, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=mage, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=feduc, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=meduc, y=fmaps, data=bwdt, geom='jitter', alpha=I(1/20))
+)
+```
+```{r,fig.width=12,fig.align='center'}
+multiplot(cols=2,
+  qplot(x=feduc, y=npvis, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=meduc, y=npvis, data=bwdt, geom='jitter', alpha=I(1/20))
 )
 ```
 ```{r}
-qplot(x=feduc, y=npvis, data=bwdt)
-qplot(x=meduc, y=npvis, data=bwdt)
-
 
 # fmaps regressed on...
 
@@ -171,12 +181,15 @@ optimize(function(n){0.045*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
 
 ```
 
+```{r,fig.width=12,fig.align='center'}
+multiplot(cols=4,
+  qplot(x=npvis, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=mage, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=feduc, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=meduc, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20))
+)
+```
 ```{r}
-qplot(x=npvis, y=bwght, data=bwdt)
-qplot(x=mage, y=bwght, data=bwdt)
-qplot(x=feduc, y=bwght, data=bwdt)
-qplot(x=meduc, y=bwght, data=bwdt)
-
 # bwght regressed on...
 
 # model 1 -- include npvissq to model diminishing return
