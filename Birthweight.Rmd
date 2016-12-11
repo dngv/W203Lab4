@@ -240,42 +240,45 @@ scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$npvissq), pch=20, col=rgb(0,0,0,0
 ```
 
 #### MLR.4: Zero Conditional Mean
-#### MLR.5: Homoskedasticity
-#### MLR.6: Normality
-
-### Model 2
-
-#### MLR.1: Linear in Parameters
-#### MLR.2: Random Sampling
-#### MLR.3: No Perfect Collinearity
-#### MLR.4: Zero Conditional Mean
-#### MLR.5: Homoskedasticity
-#### MLR.6: Normality
-
-### Model 3
-
-#### MLR.1: Linear in Parameters
-#### MLR.2: Random Sampling
-#### MLR.3: No Perfect Collinearity
-#### MLR.4: Zero Conditional Mean
-#### MLR.5: Homoskedasticity
-#### MLR.6: Normality
-
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod1b)
 ```
+
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
+
+### 4.1 Model 2
+
+#### MLR.1: Linear in Parameters
+#### MLR.2: Random Sampling
+#### MLR.3: No Perfect Collinearity
+#### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod2b)
 ```
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
+
+### 4.1 Model 3
+
+#### MLR.1: Linear in Parameters
+#### MLR.2: Random Sampling
+#### MLR.3: No Perfect Collinearity
+#### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod3b)
 ```
+
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
+
+
 
 ## 5  Model Summary
 <!--
