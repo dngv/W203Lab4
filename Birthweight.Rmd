@@ -8,9 +8,9 @@ output:
   pdf_document: default
 ---
 ```{r,echo=F,results='hide'}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 # http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
 # CC BY-SA
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
 
   # Make a list from the ... arguments and plotlist
@@ -61,17 +61,28 @@ library(ggplot2)
 library(data.table)
 ```
 
+<!--
 # Assignment
 
 Prepare a report addressing the question of whether prenatal care improves newborn health outcomes.
+-->
 
-## Introduction
-    According to the National Institutes of Health, "prenatal care shoudl begin as soon as a woman knows or suspects she is pregnant... prenatal care is important to help promote a healthy pregnancy. Women who do not seek prenatal care are three times as likely to deliver a low birth weight infant, and lack of prenatal care can also increase the risk of infant death." The following statistical analysis aims to substantiate these claims using a classical linear regression model.
+## 1  Introduction
+<!--
+1. A brief introduction
+-->
+
+According to the National Institutes of Health, "prenatal care should begin as soon as a woman knows or suspects she is pregnant... prenatal care is important to help promote a healthy pregnancy. Women who do not seek prenatal care are three times as likely to deliver a low birth weight infant, and lack of prenatal care can also increase the risk of infant death." The following statistical analysis aims to substantiate these claims using a classical linear regression model.
 
 https://www.nichd.nih.gov/health/topics/preconceptioncare/conditioninfo/Pages/default.aspx
 
-## EDA 
+## 2  Preliminary Explorations
+<!--
 2. A model building process, supported by exploratory analysis.  Your EDA should be interspersed with, and support, your modeling decisions.  In particular, you should use exploratory techniques to address
+    - What transformations to apply to variables and what new variables should be created.
+    - What variables should be included in each model
+    - Whether model assumptions are met 
+-->
 
 ```{r}
 # race
@@ -236,10 +247,10 @@ From the histograms we observe that the sample has somewhat normally distributed
 
 ```{r,fig.width=8,fig.height=8,fig.align='center'}
 par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot on 2x2
+
 scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
 scatter.smooth(jitter(bwdt$npvissq), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
 scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$npvissq), pch=20, col=rgb(0,0,0,0.05))
-par(par.orig)
 ```
 
 #### MLR.4: Zero Conditional Mean
@@ -265,20 +276,25 @@ par(par.orig)
 #### MLR.6: Normality
 
 ```{r,fig.width=12,fig.height=12}
-par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
+par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod1b)
 ```
 ```{r,fig.width=12,fig.height=12}
+par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod2b)
+```
+```{r,fig.width=12,fig.height=12}
+par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod3b)
-
-par(par.orig)
 ```
 
+## 5  Model Summary
+<!--
 5. A well-formatted regression table summarizing your model results.  Make sure that standard errors presented in this table are valid.  Also be sure to comment on both statistical and practical significance.
+-->
 
 ```{r}
 se.mod1b = sqrt(diag(vcovHC(mod1b)))
@@ -290,20 +306,20 @@ stargazer(mod1b, mod2b, mod3b, type = "text",
           star.cutoffs = c(0.05, 0.01, 0.001))
 ```
 
+## 6  Discussion
+<!--
 6. A discussion of whether your results can be interpretted causally.  In particular, include a discussion of what variables are not included in your analysis and the likely direction of omitted variable bias.  Also include a discussion of which included variables may bias your results by absorbing some of the causal effect of prenatal care.
+-->
+
+### 6.1 Causal Interpretation
+### 6.2 Omitted Variable Bias
+### 6.3 Included Variable Bias
 
 
+## 7  Conclusion
+<!--
 7. A brief conclusion with a few high-level takeaways.
+-->
 
 
-Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code.
-
-
-```{r}
-bwdt[,apgar2:=exp(fmaps)+bwght]
-modnl1<-lm(apgar2 ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
-summary(modnl1)
-par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
-plot(modnl1)
-par(par.orig)
-```
+<!-- Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code. -->
