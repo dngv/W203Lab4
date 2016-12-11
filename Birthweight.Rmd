@@ -187,18 +187,18 @@ We are interested in discovering the effect of prenatal care, so for key interes
 
 ### 3.2 Model with only covariates without bias
 
-We additionally take average cigarette smoked `cigs`.
+We additionally take average cigarette smoked `cigs`, and add mother's age and squared age `mage` and `magesq` for dimishing return.
 
 ```{r}
-(mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt))
+(mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq, data=bwdt))
 ```
 
 ### 3.3 Model with potentially problematic covariates
 
-We also add mother's age and squared age `mage` and `magesq` for dimishing return, average drink, and whether baby is male.
+We also add average drink, and whether baby is male.
 
 ```{r}
-(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt))
+(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + drink + frace*mrace, data=bwdt))
 ```
 
 ## 4  Diagnostic Assessments
@@ -252,8 +252,11 @@ plot(mod1b)
 ### 4.1 Model 2
 
 #### MLR.1: Linear in Parameters
+
 #### MLR.2: Random Sampling
+
 #### MLR.3: No Perfect Collinearity
+
 #### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
