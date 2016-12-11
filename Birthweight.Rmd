@@ -100,6 +100,7 @@ ggplot(melt(data[,is.factor.var]), aes(x=factor(value))) +
 ```
 <!-- suppress loess warnings -->
 ```{r,warning=F}
+# warnings for loess due to discretized variables have been suppressed
 scatterplotMatrix(data[,c('mage', 'meduc', 'monpre', 'npvis', 'fage', 'feduc', 'bwght', 'fmaps', 'omaps')])
 ```
 ```{r}
@@ -142,46 +143,8 @@ multiplot(cols=2,
 )
 ```
 ```{r}
-par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
-
-# fmaps regressed on...
-
-# model 1 -- include npvissq to model diminishing return
-mod1<-lm(fmaps ~ npvis + npvissq, data=bwdt)
-plot(mod1, which=1)
-plot(mod1, which=2)
-plot(mod1, which=3)
-plot(mod1, which=5)
-summary(mod1)
-
-# model 2 -- add avg cigs (some cases > 0), months of prenatal care
-mod2<-lm(fmaps ~ npvis + npvissq + monpre + cigs, data=bwdt)
-plot(mod2, which=1)
-plot(mod2, which=2)
-plot(mod2, which=3)
-plot(mod2, which=5)
-summary(mod2)
-
-# model 3 -- add mother's age and age^2 for diminishing return, avg drink, baby gender
-mod3<-lm(fmaps ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
-plot(mod3, which=1)
-plot(mod3, which=2)
-plot(mod3, which=3)
-plot(mod3, which=5)
-summary(mod3)
-
-se.mod1 = sqrt(diag(vcovHC(mod1)))
-se.mod2 = sqrt(diag(vcovHC(mod2)))
-se.mod3 = sqrt(diag(vcovHC(mod3)))
-
-stargazer(mod1, mod2, mod3, type = "text",
-          se = list(se.mod1, se.mod2, se.mod3),
-          star.cutoffs = c(0.05, 0.01, 0.001))
-
 optimize(function(n){0.042*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
 optimize(function(n){0.045*n + -0.001*n^2 - 1}, interval=c(10,30), maximum=T)
-
-par(par.orig)
 ```
 
 ```{r,fig.width=12,fig.align='center'}
@@ -192,49 +155,13 @@ multiplot(cols=4,
   qplot(x=meduc, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20))
 )
 ```
-```{r}
-par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
-
-# bwght regressed on...
-
-# model 1 -- include npvissq to model diminishing return
-mod1b<-lm(bwght ~ npvis + npvissq, data=bwdt)
-plot(mod1b, which=1)
-plot(mod1b, which=2)
-plot(mod1b, which=3)
-plot(mod1b, which=5)
-summary(mod1b)
-
-# model 2 -- add avg cigs (some cases > 0), months of prenatal care
-mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt)
-plot(mod2b, which=1)
-plot(mod2b, which=2)
-plot(mod2b, which=3)
-plot(mod2b, which=5)
-summary(mod2b)
-
-# model 3 -- add mother's age and age^2 for diminishing return, avg drink, baby gender
-mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
-plot(mod3b, which=1)
-plot(mod3b, which=2)
-plot(mod3b, which=3)
-plot(mod3b, which=5)
-summary(mod3b)
-
-se.mod1b = sqrt(diag(vcovHC(mod1b)))
-se.mod2b = sqrt(diag(vcovHC(mod2b)))
-se.mod3b = sqrt(diag(vcovHC(mod3b)))
-
-stargazer(mod1b, mod2b, mod3b, type = "text",
-          se = list(se.mod1b, se.mod2b, se.mod3b),
-          star.cutoffs = c(0.05, 0.01, 0.001))
-par(par.orig)
-```
 
 
 - What variables should be included in each model
 
-APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is a better indicator of a baby's overall health than the one minute score. The $fmaps$ variable seems to be the appropriate dependent variable that describes infant health.
+APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is a better indicator of a baby's overall health than the one minute score. The `fmaps` variable seems to be the appropriate dependent variable that describes infant health. However, the distribution of `fmaps` data is poorly suited for regression exercise as the variable is ordinal and an overwhelming majority (close to 90%) is concentrated in `fmaps==9`.
+
+We opt for birthweight instead as the distribution is more well-behaved. 
 
 
 ```{r}
@@ -243,32 +170,125 @@ APGAR score is an aggregate rating of heart rate, respiratory effort, muscle ton
 
 - Whether model assumptions are met
 
+## 3  Models
+<!--
+3. A minimum of three model speciﬁcations. In particular, you should include
+    - One model with only the explanatory variables of key interest.
+    - One model that includes only covariates that you believe increase the accuracy of your results without introducing bias.
+    - One model that includes the previous covariates, but also covariates that may be problematic for one reason or another. 
+-->
 
+### 3.1 Model with only the explanatory variables of key interest
 
-3. A minimum of three model specifications.  In particular, you should include
-
-- One model with only the explanatory variables of key interest.
+We are interested in discovering the effect of prenatal care, so for key interest variables we take count of prenatal visits `npvis` and months of prenatal care `monpre`. We additionally take `npvissq` to model diminishing return.
 
 ```{r}
-mod1<-lm(fmaps ~ npvis + monpre, data=data)
-summary(mod1)
-par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
-plot(mod1)
+(mod1b<-lm(bwght ~ npvis + npvissq + monpre, data=bwdt))
+```
+
+### 3.2 Model with only covariates without bias
+
+We additionally take average cigarette smoked `cigs`.
+
+```{r}
+(mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt))
+```
+
+### 3.3 Model with potentially problematic covariates
+
+We also add mother's age and squared age `mage` and `magesq` for dimishing return, average drink, and whether baby is male.
+
+```{r}
+(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt))
+```
+
+## 4  Diagnostic Assessments
+<!--
+4. For your first model, a detailed assessment of the 6 CLM assumptions.  For additional models, you should check all assumptions, but only highlight major differences from your first model in your report.
+-->
+
+### 4.1 Model 1
+
+#### MLR.1: Linear in Parameters
+
+```{r,fig.width=12,fig.height=4,fig.align='center'}
+multiplot(cols=3,
+  qplot(x=npvis, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=npvissq, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20)),
+  qplot(x=monpre, y=bwght, data=bwdt, geom='jitter', alpha=I(1/20))
+)
+```
+
+From the scatterplot matrix, we observe a major cluster of bivariate Gaussian distribution on top left for all predictors. However, in all cases there are also distribution of linearly increasing effect of predictor on birth weight.
+
+#### MLR.2: Random Sampling
+
+```{r}
+ggplot(melt(bwdt[,c('bwght','npvis','npvissq','monpre')]), aes(x=value)) +
+    geom_histogram(bins=30) +
+    facet_wrap(~variable, scales='free') +
+    ggtitle('Histograms of non-indicator variables')
+```
+
+From the histograms we observe that the sample has somewhat normally distributed variable values over the ranges.
+
+#### MLR.3: No Perfect Collinearity
+
+```{r,fig.width=8,fig.height=8,fig.align='center'}
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot on 2x2
+scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
+scatter.smooth(jitter(bwdt$npvissq), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
+scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$npvissq), pch=20, col=rgb(0,0,0,0.05))
 par(par.orig)
 ```
 
+#### MLR.4: Zero Conditional Mean
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
 
-- One model that includes only covariates that you believe increase the accuracy of your results without introducing bias.
+### Model 2
 
+#### MLR.1: Linear in Parameters
+#### MLR.2: Random Sampling
+#### MLR.3: No Perfect Collinearity
+#### MLR.4: Zero Conditional Mean
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
 
-- One model that includes the previous covariates, but also covariates that may be problematic for one reason or another.
+### Model 3
 
+#### MLR.1: Linear in Parameters
+#### MLR.2: Random Sampling
+#### MLR.3: No Perfect Collinearity
+#### MLR.4: Zero Conditional Mean
+#### MLR.5: Homoskedasticity
+#### MLR.6: Normality
 
-4. For your first model, a detailed assessment of the 6 CLM assumptions.  For additional models, you should check all assumptions, but only highlight major differences from your first model in your report.
+```{r,fig.width=12,fig.height=12}
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
+plot(mod1b)
+```
+```{r,fig.width=12,fig.height=12}
+
+plot(mod2b)
+
+plot(mod3b)
+
+par(par.orig)
+```
 
 5. A well-formatted regression table summarizing your model results.  Make sure that standard errors presented in this table are valid.  Also be sure to comment on both statistical and practical significance.
 
+```{r}
+se.mod1b = sqrt(diag(vcovHC(mod1b)))
+se.mod2b = sqrt(diag(vcovHC(mod2b)))
+se.mod3b = sqrt(diag(vcovHC(mod3b)))
+
+stargazer(mod1b, mod2b, mod3b, type = "text",
+          se = list(se.mod1b, se.mod2b, se.mod3b),
+          star.cutoffs = c(0.05, 0.01, 0.001))
+```
 
 6. A discussion of whether your results can be interpretted causally.  In particular, include a discussion of what variables are not included in your analysis and the likely direction of omitted variable bias.  Also include a discussion of which included variables may bias your results by absorbing some of the causal effect of prenatal care.
 
@@ -278,3 +298,12 @@ par(par.orig)
 
 Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code.
 
+
+```{r}
+bwdt[,apgar2:=exp(fmaps)+bwght]
+modnl1<-lm(apgar2 ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt)
+summary(modnl1)
+par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot diagnostics on 2x2
+plot(modnl1)
+par(par.orig)
+```
