@@ -274,9 +274,10 @@ Histograms of the `mage` and `magesq` variables look approximately normal. The `
 #### MLR.3: No Perfect Collinearity
 ```{r}
 cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='pairwise.complete.obs')
+sqrt(vif(mod2b))
 ```
 
-Aside from the expected correlation between `mage` and `magesq`, `npvis` and `npvissq`, there's no evidence of strong multicollinearity with the addition of `cigs`, `mage`, and `magesq`.
+Aside from the expected correlation between `mage` and `magesq`, `npvis` and `npvissq`, there's no evidence of strong multicollinearity with the addition of `cigs`, `mage`, and `magesq`. The variance inflation factor of adding `cigs` is ~1%.
 
 #### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
