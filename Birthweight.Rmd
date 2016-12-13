@@ -59,6 +59,7 @@ library(stargazer)
 library(reshape2)
 library(ggplot2)
 library(data.table)
+library(lmtest)
 ```
 
 <!--
@@ -118,11 +119,10 @@ scatterplotMatrix(data[,c('mage', 'meduc', 'monpre', 'npvis', 'fage', 'feduc', '
 bwdt<-as.data.table(data)
 bwdt[order(fmaps),.N,by=fmaps]
 bwdt[order(cigs),.N,by=cigs]
-
 ```
 
 
-- What transformations to apply to variables and what new variables should be created.
+### Variable transformation and aggregation
 
 The non-indicator variables don't appear particularly conducive to log transformation. The as-supplied transformed variables `magesq` and `npvissq` appear more positively skewed their originals. The `lbwght` variable is also more negatively skewed than the non-transformed `bwght`. The education variables `meduc` and `feduc` have spikes at the end of traditional highschool and 4-year college educations. Indicator variables for degree of education may be a more appropriate grouping that weighs higher education separately.
 
@@ -156,18 +156,12 @@ ggplot(melt(bwdt[,.(bwght,npvis,mage,feduc,meduc)], id.vars='bwght'), aes(x=valu
 ```
 
 
-- What variables should be included in each model
+### Variables to include in each model
 
 APGAR score is an aggregate rating of heart rate, respiratory effort, muscle tone, response to stimulation, and skin coloration. The one minute score is used to determine immediate medical response, but a low score doesn't directly translate to an unhealthy baby (premature or c-section births typically score low). The five minute score is a measure of progress and response to medical intervention and is a better indicator of a baby's overall health than the one minute score. The `fmaps` variable seems to be the appropriate dependent variable that describes infant health. However, the distribution of `fmaps` data is poorly suited for regression exercise as the variable is ordinal and an overwhelming majority (close to 90%) is concentrated in `fmaps==9`.
 
 We opt for birthweight instead as the distribution is more well-behaved. Our models will not control for "low" and "very low" birthweight indicator variables. As a proxy for infant health, the ceteris paribus effect of `npvis` on birthweight will be evaluated against the "low" and "very low" birthweight thresholds of 2500 and 1500 grams respectively.
 
-
-```{r}
-
-```
-
-- Whether model assumptions are met
 
 ## 3  Models
 <!--
@@ -239,6 +233,8 @@ scatter.smooth(jitter(bwdt$npvissq), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,
 scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$npvissq), pch=20, col=rgb(0,0,0,0.05))
 ```
 
+Scatter plot between the predictors show that collinearity is highly unlikely. 
+
 #### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
@@ -253,7 +249,7 @@ plot(mod1b)
 
 
 
-### 4.1 Model 2
+### 4.2 Model 2
 
 #### MLR.1: Linear in Parameters
 No changes effect MLR.1, as defined by the our linear model construction.
@@ -269,7 +265,7 @@ bwdt[order(cigs),.N,by=cigs]
 bwdt[order(cigs),.N,by=cigs>0]
 ```
 
-Histograms of the `mage` and `magesq` variables look approximately normal. The `cigs` variable is mostly 0, with a marginal number of positive cases. Omitting $NA$ cases of `cigs` shows about ~10% of mothers smoked at least 1 cigarette per day.
+Histograms of the `mage` and `magesq` variables look approximately normal. The `cigs` variable is mostly 0, with a marginal number of positive cases. Omitting `NA` cases of `cigs` shows about ~10% of mothers smoked at least 1 cigarette per day.
 
 #### MLR.3: No Perfect Collinearity
 ```{r}
@@ -293,7 +289,7 @@ There's no major difference in the residuals vs fitted values plot compared to m
 bptest(mod2b)
 ```
 
-The scale-location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in p<0.05, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to n=1832 observations.
+The scale-location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in $p<0.05$, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to $n=1832$ observations.
 
 
 #### MLR.6: Normality
@@ -301,9 +297,9 @@ The scale-location plot also looks similar to model 1. The smoothing line is fai
 shapiro.test(mod2b$residuals)
 ```
 
-The normal q-q plot shows deviation from normal at lower theoretical quantiles, and similar to the breusch-pagan test, the high number of observations influences the shapiro-wilks test and rejects normality with very high significance. No changes from model 1 and n=1832 invokes CLT.
+The Normal Q-Q plot shows deviation from normal at lower theoretical quantiles, and similar to the Breusch-Pagan test, the high number of observations influences the Shapiro-Wilks test and rejects normality with very high significance. No changes from model 1 and $n=1832$ invokes CLT.
 
-### 4.1 Model 3
+### 4.3 Model 3
 
 #### MLR.1: Linear in Parameters
 #### MLR.2: Random Sampling
@@ -338,11 +334,11 @@ stargazer(mod1b, mod2b, mod3b, type = "text",
 (AIC(mod2b)-AIC(mod3b))/AIC(mod2b)
 ```
 
-Using heteroskedasticity-robust standard errors, we find p<0.05 statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents vcovHC() calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was 6.2%, whereas from model 2 to 3 was only 0.5%.
+Using heteroskedasticity-robust standard errors, we find $p<0.05$ statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents `vcovHC()` calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was $6.2\%$, whereas from model 2 to 3 was only $0.5\%$.
 
 In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires solving for the quadratic expression, which will be covered in the causal interpretation. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
 
-The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term, which by itself corresponds with a white mother + white father. Notable race combinations are white mother + black father and "other" mother + "other" father, which both lower the intercept term (=1733-354) to less than 1500 grams, the very low birthweight threshold. On the opposite end, the combination of "other" mother + black father results in a drastic increase of the intercept term (=1733+821) above 2500 grams, the normal birthweight threshold.
+The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term, which by itself corresponds with a white mother + white father. Notable race combinations are white mother + black father and "other" mother + "other" father, which both lower the intercept term ($=1733-354$) to less than 1500 grams, the very low birthweight threshold. On the opposite end, the combination of "other" mother + black father results in a drastic increase of the intercept term ($=1733+821$) above 2500 grams, the normal birthweight threshold.
 
 ## 6  Discussion
 <!--
@@ -353,7 +349,7 @@ The addition of `drink` and race variables has marginal effect on the `npvis`, `
 
 We do not have a controlled experiment where the number of prenatal visits can be manipulated as a treatment variable, nor would it be ethical to limit the number of prenatal vists during pregnancy as part of a research design. A causal framework requires an exogenous treatment variable, uncorrelated with all other independent variables, such that only changes in the treatment variable will affect the outcome. For example, the number of prenatal visits may be correlated with omitted variables such as the mother's health or medical conditions not related to cigarette usage or consumption of alcohol.
 
-The lack of randomization yields a significant reservation on the external validity of causal inference. As shown in our earlier EDA of indicator variables, over 87% of observations belong to white male and female parents. Only 5.3% of observations pertain to black male and female parents, while 4.4% pertain to "other". The generalizability of a causal inference from this sample is limited.
+The lack of randomization yields a significant reservation on the external validity of causal inference. As shown in our earlier EDA of indicator variables, over $87\%$ of observations belong to white male and female parents. Only $5.3\%$ of observations pertain to black male and female parents, while $4.4\%$ pertain to "other". The generalizability of a causal inference from this sample is limited.
 
 Given these limitations, the model developed in our analysis is associative rather than causal.
 
