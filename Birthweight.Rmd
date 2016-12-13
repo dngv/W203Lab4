@@ -187,7 +187,7 @@ We are interested in discovering the effect of prenatal care, so for key interes
 
 ### 3.2 Model with only covariates without bias
 
-We additionally take average cigarette smoked `cigs`, and add mother's age and squared age `mage` and `magesq` for dimishing return.
+We additionally take average cigarette smoked `cigs`, and add mother's age and squared age `mage` and `magesq` for dimishing return. These variables relate to the mother's health and are expected to correlate with the number of prenatal vists `npvis`. Controlling for these additional variables would improve exogeneity of the `npvis` variable and the OLS coefficient estimates.
 
 ```{r}
 (mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq, data=bwdt))
@@ -351,9 +351,17 @@ The addition of `drink` and race variables has marginal effect on the `npvis`, `
 
 ### 6.1 Causal Interpretation
 
+We do not have a controlled experiment where the number of prenatal visits can be manipulated as a treatment variable, nor would it be ethical to limit the number of prenatal vists during pregnancy as part of a research design. A causal framework requires an exogenous treatment variable, uncorrelated with all other independent variables, such that only changes in the treatment variable will affect the outcome. For example, the number of prenatal visits may be correlated with omitted variables such as the mother's health or medical conditions not related to cigarette usage or consumption of alcohol.
+
+The lack of randomization yields a significant reservation on the external validity of causal inference. As shown in our earlier EDA of indicator variables, over 87% of observations belong to white male and female parents. Only 5.3% of observations pertain to black male and female parents, while 4.4% pertain to "other". The generalizability of a causal inference from this sample is limited.
+
+Given these limitations, the model developed in our analysis is associative rather than causal.
 
 
 ### 6.2 Omitted Variable Bias
+
+
+
 ### 6.3 Included Variable Bias
 
 
