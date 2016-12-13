@@ -445,7 +445,7 @@ Considering model 1, the only additional variable besides `npvis` is `monpre` th
 
 In model 2, the `cigs` variable should correlate negatively with `bwght` and positively with `npvis` as smoking is a detriment to the mother's health and the health of the infant. Unhealthy mothers may encounter complications which prompt more prenatal visits. Consequently, `cigs` should positively correlate with `npvis`. The bias on `npvis` due to omitting `cigs` might positive. However this is not the case evaluating the restricted model. The bias due to `cigs` is actually positive because `cigs` negatively correlates with `npvis`. This result is reasonable considering that smoking mothers may be less educated or more ignorant about their health and that of the baby's, so they may attend fewer prenatal visits.
 
-As for `mage`, it's not intuitive that the mother's age would correlate positively or negatively with either `npvis` or `bwght`. Evaluating the restricted model shows little change without `mage` shows little change in the coeffcient for `npvis`.
+As for `mage`, it's not intuitive that the mother's age would correlate positively or negatively with either `npvis` or `bwght`. Evaluating the restricted model without `mage` shows little change in the coeffcient for `npvis`.
 
 
 ```{r}
