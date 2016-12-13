@@ -447,15 +447,6 @@ In model 2, the `cigs` variable should correlate negatively with `bwght` and pos
 
 As for `mage`, it's not intuitive that the mother's age would correlate positively or negatively with either `npvis` or `bwght`. Evaluating the restricted model without `mage` shows little change in the coeffcient for `npvis`.
 
-
-```{r}
-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt)
-lm(bwght ~ npvis + npvissq + monpre, data=bwdt)
-lm(bwght ~ npvis + npvissq + monpre + mage + magesq, data=bwdt)
-```
-
-
-
 ## 7  Conclusion
 <!--
 7. A brief conclusion with a few high-level takeaways.
