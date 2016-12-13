@@ -187,18 +187,18 @@ We are interested in discovering the effect of prenatal care, so for key interes
 
 ### 3.2 Model with only covariates without bias
 
-We additionally take average cigarette smoked `cigs`.
+We additionally take average cigarette smoked `cigs`, and add mother's age and squared age `mage` and `magesq` for dimishing return.
 
 ```{r}
-(mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt))
+(mod2b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq, data=bwdt))
 ```
 
 ### 3.3 Model with potentially problematic covariates
 
-We also add mother's age and squared age `mage` and `magesq` for dimishing return, average drink, and whether baby is male.
+We also add average drink, and whether baby is male.
 
 ```{r}
-(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + male + drink, data=bwdt))
+(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + drink + frace*mrace, data=bwdt))
 ```
 
 ## 4  Diagnostic Assessments
@@ -247,21 +247,61 @@ plot(mod1b)
 ```
 
 #### MLR.5: Homoskedasticity
+
+
 #### MLR.6: Normality
+
+
 
 ### 4.1 Model 2
 
 #### MLR.1: Linear in Parameters
+No changes effect MLR.1, as defined by the our linear model construction.
+
 #### MLR.2: Random Sampling
+```{r}
+ggplot(melt(bwdt[,.(cigs,mage,magesq)]), aes(x=value)) +
+    geom_histogram(bins=30) +
+    facet_wrap(~variable, scales='free') +
+    ggtitle('Histograms of non-indicator variables')
+
+bwdt[order(cigs),.N,by=cigs]
+bwdt[order(cigs),.N,by=cigs>0]
+```
+
+Histograms of the `mage` and `magesq` variables look approximately normal. The `cigs` variable is mostly 0, with a marginal number of positive cases. Omitting $NA$ cases of `cigs` shows about ~10% of mothers smoked at least 1 cigarette per day.
+
 #### MLR.3: No Perfect Collinearity
+```{r}
+cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='pairwise.complete.obs')
+sqrt(vif(mod2b))
+```
+
+Aside from the expected correlation between `mage` and `magesq`, `npvis` and `npvissq`, there's no evidence of strong multicollinearity with the addition of `cigs`, `mage`, and `magesq`. The variance inflation factor of adding `cigs` is ~1%.
+
 #### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod2b)
 ```
+
+There's no major difference in the residuals vs fitted values plot compared to model 1. The smoothing line still shows an approximate distribution of residuals about zero, with the same small grouping of values toward -3000.
+
 #### MLR.5: Homoskedasticity
+```{r}
+bptest(mod2b)
+```
+
+The scale-location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in p<0.05, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to n=1832 observations.
+
+
 #### MLR.6: Normality
+```{r}
+shapiro.test(mod2b$residuals)
+```
+
+The normal q-q plot shows deviation from normal at lower theoretical quantiles, and similar to the breusch-pagan test, the high number of observations influences the shapiro-wilks test and rejects normality with very high significance. No changes from model 1 and n=1832 invokes CLT.
 
 ### 4.1 Model 3
 
@@ -293,7 +333,16 @@ se.mod3b = sqrt(diag(vcovHC(mod3b)))
 stargazer(mod1b, mod2b, mod3b, type = "text",
           se = list(se.mod1b, se.mod2b, se.mod3b),
           star.cutoffs = c(0.05, 0.01, 0.001))
+
+(AIC(mod1b)-AIC(mod2b))/AIC(mod1b)
+(AIC(mod2b)-AIC(mod3b))/AIC(mod2b)
 ```
+
+Using heteroskedasticity-robust standard errors, we find p<0.05 statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents vcovHC() calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was 6.2%, whereas from model 2 to 3 was only 0.5%.
+
+In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires solving for the quadratic expression, which will be covered in the causal interpretation. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
+
+The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term, which by itself corresponds with a white mother + white father. Notable race combinations are white mother + black father and "other" mother + "other" father, which both lower the intercept term (=1733-354) to less than 1500 grams, the very low birthweight threshold. On the opposite end, the combination of "other" mother + black father results in a drastic increase of the intercept term (=1733+821) above 2500 grams, the normal birthweight threshold.
 
 ## 6  Discussion
 <!--
@@ -301,6 +350,9 @@ stargazer(mod1b, mod2b, mod3b, type = "text",
 -->
 
 ### 6.1 Causal Interpretation
+
+
+
 ### 6.2 Omitted Variable Bias
 ### 6.3 Included Variable Bias
 
