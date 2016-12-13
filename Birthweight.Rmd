@@ -392,9 +392,6 @@ stargazer(mod1b, mod2b, mod3b, type = "latex", header=F,
 (AIC(mod2b)-AIC(mod3b))/AIC(mod2b)
 ```
 
-
-*Note:* Despite our attempts to fix this, the stargazer regression table renders out of place. Please refer to the table at the end of section 6.1.
-
 Using heteroskedasticity-robust standard errors, we find $p<0.05$ statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents `vcovHC()` calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was $6.2\%$, whereas from model 2 to 3 was only $0.5\%$.
 
 In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires accounting for the quadratic term, which will be covered in the causal interpretation. The `mage` coefficient cannot be zero in reality, so reasonable interpretation of the importance of `npvis` can't be based on the intercept term alone. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
@@ -443,6 +440,20 @@ Infant's health can be dependent on various factors other than the race and smok
 Similarly the daily work hour, if the mother is working and number of hours spent in travelling could be some minor but essential variables which could improve the model performance, and could also aid in causal interpretation of the model. 
 
 ### 6.3 Included Variable Bias
+
+Considering model 1, the only additional variable besides `npvis` is `monpre` the month prenatal care began. We expect `monpre` to correlate negatively with `npvis` since higher values of `monpre` equates to less time available for prenatal visits. The correlation of `monpre` with `bwght`, our proxy for infant health, is unclear. Late start to prenatal care could be due to neglect, in which case the correlation is negative, or due to a scarcity of issues during pregnancy, in which case the correlation is positive. Executing lm() on the restricted model (omitting `monpre`) reveals a negative bias on `npvis` and a small negative correlation between `monpre` and `bwght`.
+
+In model 2, the `cigs` variable should correlate negatively with `bwght` and positively with `npvis` as smoking is a detriment to the mother's health and the health of the infant. Unhealthy mothers may encounter complications which prompt more prenatal visits. Consequently, `cigs` should positively correlate with `npvis`. The bias on `npvis` due to omitting `cigs` might positive. However this is not the case evaluating the restricted model. The bias due to `cigs` is actually positive because `cigs` negatively correlates with `npvis`. This result is reasonable considering that smoking mothers may be less educated or more ignorant about their health and that of the baby's, so they may attend fewer prenatal visits.
+
+As for `mage`, it's not intuitive that the mother's age would correlate positively or negatively with either `npvis` or `bwght`. Evaluating the restricted model shows little change without `mage` shows little change in the coeffcient for `npvis`.
+
+
+```{r}
+lm(bwght ~ npvis + npvissq + monpre + cigs, data=bwdt)
+lm(bwght ~ npvis + npvissq + monpre, data=bwdt)
+lm(bwght ~ npvis + npvissq + monpre + mage + magesq, data=bwdt)
+```
+
 
 
 ## 7  Conclusion
