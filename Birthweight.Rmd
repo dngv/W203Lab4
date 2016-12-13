@@ -1,12 +1,15 @@
 ---
 title: 'Lab 4: Does Prenatal Care Improve Infant Health?'
-subtitle: 'W203: Statistics for Data Science'
+author: "Dan Guevarra, Bas Hendri, Saurabh Jaju (beatspace9,dip,saurabh.jaju@berkeley.edu)"
 date: "December 8, 2016"
-author: 'Dan Guevarra, Bas Hendri, Saurabh Jaju ({beatspace9,dip,saurabh.jaju}@berkeley.edu)'
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
+subtitle: 'W203: Statistics for Data Science'
 ---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE)
+```
 ```{r,echo=F,results='hide'}
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 # http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
@@ -54,7 +57,6 @@ desc
 ```{r,warning=F,message=F}
 library(car)
 library(sandwich)
-##  Hlavac, Marek (2015). stargazer: Well-Formatted Regression and Summary Statistics Tables.
 library(stargazer)
 library(reshape2)
 library(ggplot2)
@@ -189,10 +191,17 @@ We additionally take average cigarette smoked `cigs`, and add mother's age and s
 
 ### 3.3 Model with potentially problematic covariates
 
-We also add average drink, and whether baby is male.
+In model 3 we will consider various indicator variables and the non indicator variable drink also four combination variables for combination variable of type of couple having the baby will also be considered.
+The types of couple would be $ White Couple$, $black Couple$, $other Couple$ and $mixed Couple$
 
 ```{r}
-(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs + mage + magesq + drink + frace*mrace, data=bwdt))
+# Dummy coding factor variables to Dichotomous 
+bwdt$whtCouple<-as.numeric(bwdt$mwhte & bwdt$fwhte)
+bwdt$blkCouple<-as.numeric(bwdt$mblck & bwdt$fblck)
+bwdt$othCouple<-as.numeric(bwdt$moth & bwdt$foth)
+bwdt$mixedCouple<-as.numeric(!(bwdt$whtCouple | bwdt$blkCouple | bwdt$othCouple))
+
+(mod3b<-lm(bwght ~ +npvis + npvissq + monpre + cigs+ mage + magesq + drink + mixedCouple + whtCouple + blkCouple , data=bwdt))
 ```
 
 ## 4  Diagnostic Assessments
@@ -232,7 +241,7 @@ scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.
 scatter.smooth(jitter(bwdt$npvissq), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
 scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$npvissq), pch=20, col=rgb(0,0,0,0.05))
 
-cor(bwdt[,c('npvis','npvissq','monpre')], use='p')
+cor(bwdt[,.(npvis,npvissq,monpre)], use='p')
 ```
 
 Scatter plot between the predictors show that collinearity is unlikely, though raw values show minor correlation. We ignore the expected `npvis`-`npvissq` correlation.
@@ -274,7 +283,6 @@ ggplot(melt(bwdt[,.(cigs,mage,magesq)]), aes(x=value)) +
     facet_wrap(~variable, scales='free') +
     ggtitle('Histograms of non-indicator variables')
 
-bwdt[order(cigs),.N,by=cigs]
 bwdt[order(cigs),.N,by=cigs>0]
 ```
 
@@ -282,7 +290,7 @@ Histograms of the `mage` and `magesq` variables look approximately normal. The `
 
 #### MLR.3: No Perfect Collinearity
 ```{r}
-cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='pairwise.complete.obs')
+cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='p')
 sqrt(vif(mod2b))
 ```
 
@@ -315,43 +323,82 @@ The Normal Q-Q plot shows deviation from normal at lower theoretical quantiles, 
 ### 4.3 Model 3
 
 #### MLR.1: Linear in Parameters
+The parameters as observed in model 1 are all linear, the variables for the model are both dummy coded and contineous variables but the model parameters are still linear. 
 #### MLR.2: Random Sampling
+```{r}
+  ggplot(melt(bwdt[,.(drink,whtCouple,blkCouple,othCouple,mixedCouple)]), aes(x=value)) +
+    geom_histogram(bins=30) +
+    facet_wrap(~variable, scales='free') +
+    ggtitle('Histograms of indicator variables and drink variable')
+  ## The distribution of number of drinks is as follows
+    table(bwdt$drink)
+    data.frame(numWht=sum(bwdt$whtCouple),numMixed=sum(bwdt$mixedCouple),numBlk=sum(bwdt$blkCouple),numOth=sum(bwdt$othCouple))
+```
+
+The table shows the number of different types of couples part of the study dataset.
+We can see that the sampling of different types of couples is extremely skewed. With most of the observations in the dataset of white couples, while the minorites are extremely under represented.
+
+Also the drinks variables has an extremely skewed sampling. Where most of the mothers are non drinkers. With such a small observation set for drinker, it is very difficult to analyze the effect of drinking on the birthweight and infant's health.
+
+So for this model atleast which includes the race of the infant ($ White$, $black$, $other$ and $mixed$) and the drinking habits of the mother(only 16 samples of mother having drinks) the sampling does not seem to be random. 
+One can argue that the sampling of drink variable may be random as most of the mothers stop drinking during pregnancy, but still only 16 observations out of 1832 observations (which are not even normally distributed) is a small number for the model to be able to quantify the effects of drinking to infant's health and birthweight
 #### MLR.3: No Perfect Collinearity
+```{r}
+x<-data.frame(cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq,drink,mixedCouple,whtCouple,blkCouple)], use='pairwise.complete.obs'))
+x[,c("drink","mixedCouple","whtCouple","blkCouple")]
+
+sqrt(vif(mod3b))
+```
+
+As expected the couple variables show high collinearity with respective mother's and father's race as expected as the couple variables are derived from the respective father's and mother's race, as the correlation is greater than 0.9, So,we do not include them in a linear model. But none of the added variables show perfect collinearity with any of the variables. 
+
 #### MLR.4: Zero Conditional Mean
 ```{r,fig.width=12,fig.height=12}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod3b)
 ```
-
+There's no major difference in the residuals vs fitted values plot compared to model 1. The smoothing line still shows an approximate distribution of residuals about zero, with the same small grouping of values toward -3000.
 #### MLR.5: Homoskedasticity
+```{r}
+  bptest(mod3b)
+```
+The scale-location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in p<0.05, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to n=1832 observations. Which is similar to the first and second model. This must be same because the dependent variable is the same for all the models
 #### MLR.6: Normality
 
-
+```{r}
+  shapiro.test(mod3b$residuals)
+```
+The qqplot is not on the diagonal and has tails. But the sample size is relatively large and thus assumtions 1 to 5 are sufficient for OLS regression as CLT can be invoked. The shapiro-wilks test usally tests positive (significant) for large samples.   
 
 ## 5  Model Summary
 <!--
 5. A well-formatted regression table summarizing your model results.  Make sure that standard errors presented in this table are valid.  Also be sure to comment on both statistical and practical significance.
 -->
 
-```{r}
+
+```{r, results='asis'}
 se.mod1b = sqrt(diag(vcovHC(mod1b)))
 se.mod2b = sqrt(diag(vcovHC(mod2b)))
 se.mod3b = sqrt(diag(vcovHC(mod3b)))
 
-stargazer(mod1b, mod2b, mod3b, type = "text",
+stargazer(mod1b, mod2b, mod3b, type = "latex", header=F,
           se = list(se.mod1b, se.mod2b, se.mod3b),
           star.cutoffs = c(0.05, 0.01, 0.001))
+```
 
+```{r}
 (AIC(mod1b)-AIC(mod2b))/AIC(mod1b)
 (AIC(mod2b)-AIC(mod3b))/AIC(mod2b)
 ```
 
 Using heteroskedasticity-robust standard errors, we find $p<0.05$ statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents `vcovHC()` calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was $6.2\%$, whereas from model 2 to 3 was only $0.5\%$.
 
-In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires solving for the quadratic expression, which will be covered in the causal interpretation. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
+In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires accounting for the quadratic term, which will be covered in the causal interpretation. The `mage` coefficient cannot be zero in reality, so reasonable interpretation of the importance of `npvis` can't be based on the intercept term alone. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
 
-The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term, which by itself corresponds with a white mother + white father. Notable race combinations are white mother + black father and "other" mother + "other" father, which both lower the intercept term ($=1733-354$) to less than 1500 grams, the very low birthweight threshold. On the opposite end, the combination of "other" mother + black father results in a drastic increase of the intercept term ($=1733+821$) above 2500 grams, the normal birthweight threshold.
+The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, `monpre`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term. The intercept term cannot be interpreted by itself, because one of the *Couple variables will always have a value of 1. The minimum infant weight for white couples is very close to the model 2 estimate of the intercept, likely due to the high majority of observations being white couples. Mixed couples tend to produce infants that are 90 grams heavier than white couples, while black couples' infants are 30 grams lighter.
+
+
 
 ## 6  Discussion
 <!--
@@ -360,7 +407,26 @@ The addition of `drink` and race variables has marginal effect on the `npvis`, `
 
 ### 6.1 Causal Interpretation
 
-We do not have a controlled experiment where the number of prenatal visits can be manipulated as a treatment variable, nor would it be ethical to limit the number of prenatal vists during pregnancy as part of a research design. A causal framework requires an exogenous treatment variable, uncorrelated with all other independent variables, such that only changes in the treatment variable will affect the outcome. For example, the number of prenatal visits may be correlated with omitted variables such as the mother's health or medical conditions not related to cigarette usage or consumption of alcohol.
+```{r}
+# ceteris paribus effect of npvis on birthweight, model 1
+mod1b$coefficients[2]/(2*abs(mod1b$coefficients[3]))
+
+# ceteris paribus effect of npvis on birthweight, model 2
+mod2b$coefficients[2]/(2*abs(mod2b$coefficients[3]))
+
+# predict the effect of a single prenatal visit on birthweight
+# using the lowest sample values of monpre, cigs, mage
+predict(mod2b, newdata=data.frame(npvis=1, 
+                                  npvissq=1,
+                                  monpre=min(bwdt$monpre, na.rm=T),
+                                  cigs=min(bwdt$cigs, na.rm=T),
+                                  mage=min(bwdt$mage, na.rm=T),
+                                  magesq=min(bwdt$magesq, na.rm=T)))
+```
+
+Including the quadratic term `npvissq` accounts for the diminishing effect of the number of prenatal vists `npvis` on birthweight `bwght`. Model 1 shows a negative return on birthweight after 23 vists, while model 2 is slightly higher at 24 vists. Taken as is, model 1 cannot predict low birthweights because the intercept term ~2900 grams is greater than low birthweight threshold of 2500 grams. While the intercept term in model 2 is below the low birthweight threshold, it was shown that even with minimum values of `monpre`, `cigs`, and `mage`, the effect of one prenatal visit already yields a birthweight value over 2500 grams, i.e. a healthy infant.
+
+Ultimately, we do not have a controlled experiment where the number of prenatal visits can be manipulated as a treatment variable, nor would it be ethical to limit the number of prenatal vists during pregnancy as part of a research design. A causal framework requires an exogenous treatment variable, uncorrelated with all other independent variables, such that only changes in the treatment variable will affect the outcome. For example, the number of prenatal visits may be correlated with omitted variables such as the mother's health or medical conditions not related to cigarette usage or consumption of alcohol.
 
 The lack of randomization yields a significant reservation on the external validity of causal inference. As shown in our earlier EDA of indicator variables, over $87\%$ of observations belong to white male and female parents. Only $5.3\%$ of observations pertain to black male and female parents, while $4.4\%$ pertain to "other". The generalizability of a causal inference from this sample is limited.
 
@@ -369,15 +435,23 @@ Given these limitations, the model developed in our analysis is associative rath
 
 ### 6.2 Omitted Variable Bias
 
+Infant's health can be dependent on various factors other than the race and smoking/ drinking habits. Some of the most important variables which would affect the infant's health may be regarding the mother's health condition. If the mother has been diagnosed with lifestyle diseases in particular like high blood pressure and diabetis. 
 
+Similarly the daily work hour, if the mother is working and number of hours spent in travelling could be some minor but essential variables which could improve the model performance, and could also aid in causal interpretation of the model. 
 
 ### 6.3 Included Variable Bias
 
+Considering model 1, the only additional variable besides `npvis` is `monpre` the month prenatal care began. We expect `monpre` to correlate negatively with `npvis` since higher values of `monpre` equates to less time available for prenatal visits. The correlation of `monpre` with `bwght`, our proxy for infant health, is unclear. Late start to prenatal care could be due to neglect, in which case the correlation is negative, or due to a scarcity of issues during pregnancy, in which case the correlation is positive. Executing lm() on the restricted model (omitting `monpre`) reveals a negative bias on `npvis` and a small negative correlation between `monpre` and `bwght`.
+
+In model 2, the `cigs` variable should correlate negatively with `bwght` and positively with `npvis` as smoking is a detriment to the mother's health and the health of the infant. Unhealthy mothers may encounter complications which prompt more prenatal visits. Consequently, `cigs` should positively correlate with `npvis`. The bias on `npvis` due to omitting `cigs` might positive. However this is not the case evaluating the restricted model. The bias due to `cigs` is actually positive because `cigs` negatively correlates with `npvis`. This result is reasonable considering that smoking mothers may be less educated or more ignorant about their health and that of the baby's, so they may attend fewer prenatal visits.
+
+As for `mage`, it's not intuitive that the mother's age would correlate positively or negatively with either `npvis` or `bwght`. Evaluating the restricted model without `mage` shows little change in the coeffcient for `npvis`.
 
 ## 7  Conclusion
 <!--
 7. A brief conclusion with a few high-level takeaways.
 -->
 
+The supplied dataset is quite limited in the variation of APGAR scores, which we believe is the appropriate metric of infant health. As a proxy, we consider birthweight relative to the low and very low birthweight thresholds. The models we've constructed are associative in relating the number of prenatal vists to birthweight, due to endogeneity of the `npvis` variable with factors in the error term such as mother's general health and stress levels. Although we've leverged the greater variation in birthweight to better fit the OLS assumptions, it's still the case that the sample provided in this dataset consists mainly of healthy infants. The number of prenatal vists has a positive association with birthweight, but the mother's age is also positive with even greater magnitude. There are significant ethical considerations to performing a causality study of the effect of prenatal vists on infant health, which parallels the Tuskegee Syphillis debacle.
 
 <!-- Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code. -->
