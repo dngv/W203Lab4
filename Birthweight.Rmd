@@ -397,9 +397,9 @@ stargazer(mod1b, mod2b, mod3b, type = "latex", header=F,
 
 Using heteroskedasticity-robust standard errors, we find $p<0.05$ statistical significance across all parameters in model 1, and all but `npvissq` coefficient in model 2. The addition of `drink` and parent race variables prevents `vcovHC()` calculation of standard errors for model 3 so we cannot comment on statistical signifiance, other than the relative drop in AIC from model 1 to 2 was $6.2\%$, whereas from model 2 to 3 was only $0.5\%$.
 
-In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires accounting for the quadratic term, which will be covered in the causal interpretation. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
+In terms of practical signifiance, model 1 shows that the `npvis` parameter has the greatest effect on birthweight (50 grams per prenatal care visit, ignoring the quadratic term for simplicity). The addition of `mage` and `cigs` in model 2 has a drastic effect on both the `npvis` parameter (50 drops to 40 grams per visit) and the intercept term ~2900 grams falls to ~1800 grams with zero prenatal vists. In addition, model 2 shows mother's age `mage` having a stronger effect than `npvis`. Proper ceteris paribus interpretation requires accounting for the quadratic term, which will be covered in the causal interpretation. The `mage` coefficient cannot be zero in reality, so reasonable interpretation of the importance of `npvis` can't be based on the intercept term alone. The negative value `cigs` parameter agrees with the expected negative impact on infant health.
 
-The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term, which by itself corresponds with a white mother + white father. Notable race combinations are white mother + black father and "other" mother + "other" father, which both lower the intercept term ($=1733-354$) to less than 1500 grams, the very low birthweight threshold. On the opposite end, the combination of "other" mother + black father results in a drastic increase of the intercept term ($=1733+821$) above 2500 grams, the normal birthweight threshold.
+The addition of `drink` and race variables has marginal effect on the `npvis`, `mage`, `monpre`, and `cigs` parameters, which increase in magnitude slightly. The greater effect on practical significance occurs for the race-modification of the intercept term. The intercept term cannot be interpreted by itself, because one of the *Couple variables will always have a value of 1. The minimum infant weight for white couples is very close to the model 2 estimate of the intercept, likely due to the high majority of observations being white couples. Mixed couples tend to produce infants that are 90 grams heavier than white couples, while black couples' infants are 30 grams lighter.
 
 
 
@@ -438,7 +438,9 @@ Given these limitations, the model developed in our analysis is associative rath
 
 ### 6.2 Omitted Variable Bias
 
+Infant's health can be dependent on various factors other than the race and smoking/ drinking habits. Some of the most important variables which would affect the infant's health may be regarding the mother's health condition. If the mother has been diagnosed with lifestyle diseases in particular like high blood pressure and diabetis. 
 
+Similarly the daily work hour, if the mother is working and number of hours spent in travelling could be some minor but essential variables which could improve the model performance, and could also aid in causal interpretation of the model. 
 
 ### 6.3 Included Variable Bias
 
@@ -448,5 +450,6 @@ Given these limitations, the model developed in our analysis is associative rath
 7. A brief conclusion with a few high-level takeaways.
 -->
 
+The supplied dataset is quite limited in the variation of APGAR scores, which we believe is the appropriate metric of infant health. As a proxy, we consider birthweight relative to the low and very low birthweight thresholds. The models we've constructed are associative in relating the number of prenatal vists to birthweight, due to endogeneity of the `npvis` variable with factors in the error term such as mother's general health and stress levels. Although we've leverged the greater variation in birthweight to better fit the OLS assumptions, it's still the case that the sample provided in this dataset consists mainly of healthy infants. The number of prenatal vists has a positive association with birthweight, but the mother's age is also positive with even greater magnitude. There are significant ethical considerations to performing a causality study of the effect of prenatal vists on infant health, which parallels the Tuskegee Syphillis debacle.
 
 <!-- Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code. -->
