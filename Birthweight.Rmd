@@ -54,7 +54,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 load("bwght_w203.RData")
 desc
 ```
-```{r,warning=F,message=F}
+```{r,message=F}
 library(car)
 library(sandwich)
 library(stargazer)
@@ -98,14 +98,14 @@ is.factor.var <- c(14,24:26)
 is.value.var <- c(1:11,21:23)
 ```
 
-```{r}
+```{r,fig.align='center'}
 # non-indicator vars:
 ggplot(melt(data[,is.value.var]), aes(x=value)) +
     geom_histogram(bins=30) +
     facet_wrap(~variable, scales='free') +
     ggtitle('Histograms of non-indicator variables')
-
-
+```
+```{r,fig.width=3,fig.height=3,fig.align='center'}
 # indicator vars
 ggplot(melt(data[,is.factor.var]), aes(x=factor(value))) +
     stat_count() +
@@ -113,10 +113,14 @@ ggplot(melt(data[,is.factor.var]), aes(x=factor(value))) +
     ggtitle('Count of indicator variables')
 ```
 <!-- suppress loess warnings -->
-```{r,warning=F}
+```{r}
 # warnings for loess due to discretized variables have been suppressed
-scatterplotMatrix(data[,c('mage', 'meduc', 'monpre', 'npvis', 'fage', 'feduc', 'bwght', 'fmaps', 'omaps')])
+scatterplotMatrix(data[,c('mage', 'meduc', 'monpre', 'npvis', 'fage',
+                          'feduc', 'bwght', 'fmaps', 'omaps')])
 ```
+
+$\pagebreak$
+
 ```{r}
 bwdt<-as.data.table(data)
 bwdt[order(fmaps),.N,by=fmaps]
@@ -141,20 +145,23 @@ bwdt[,frace:=factor(fwhte*1+fblck*2+foth*3,
                     labels=c('white', 'black', 'other'))]
 ```
 ```{r,fig.width=12,fig.height=8,fig.align='center'}
-ggplot(melt(bwdt[,.(fmaps,npvis,meduc,npvissq,feduc,mage)], id.vars='fmaps'), aes(x=value, y=fmaps)) +
-    geom_jitter(alpha=I(1/20)) +
-    facet_wrap(~variable, scales='free', ncol=3)
+ggplot(melt(bwdt[,.(fmaps,npvis,meduc,npvissq,feduc,mage)], id.vars='fmaps'),
+       aes(x=value, y=fmaps)) +
+       geom_jitter(alpha=I(1/20)) +
+       facet_wrap(~variable, scales='free', ncol=3)
 ```
 ```{r,fig.width=12,fig.align='center'}
-ggplot(melt(bwdt[,.(npvis,feduc,meduc)], id.vars='npvis'), aes(x=value, y=npvis)) +
-    geom_jitter(alpha=I(1/20)) +
-    facet_grid(.~variable, scales='free')
+ggplot(melt(bwdt[,.(npvis,feduc,meduc)], id.vars='npvis'),
+       aes(x=value, y=npvis)) +
+       geom_jitter(alpha=I(1/20)) +
+       facet_grid(.~variable, scales='free')
 ```
 
 ```{r,fig.width=12,fig.align='center'}
-ggplot(melt(bwdt[,.(bwght,npvis,mage,feduc,meduc)], id.vars='bwght'), aes(x=value, y=bwght)) +
-    geom_jitter(alpha=I(1/20)) +
-    facet_grid(.~variable, scales='free')
+ggplot(melt(bwdt[,.(bwght,npvis,mage,feduc,meduc)], id.vars='bwght'),
+       aes(x=value, y=bwght)) +
+       geom_jitter(alpha=I(1/20)) +
+       facet_grid(.~variable, scales='free')
 ```
 
 
@@ -201,8 +208,11 @@ bwdt$blkCouple<-as.numeric(bwdt$mblck & bwdt$fblck)
 bwdt$othCouple<-as.numeric(bwdt$moth & bwdt$foth)
 bwdt$mixedCouple<-as.numeric(!(bwdt$whtCouple | bwdt$blkCouple | bwdt$othCouple))
 
-(mod3b<-lm(bwght ~ +npvis + npvissq + monpre + cigs+ mage + magesq + drink + mixedCouple + whtCouple + blkCouple , data=bwdt))
+(mod3b<-lm(bwght ~ npvis + npvissq + monpre + cigs+ mage + magesq + drink + mixedCouple +
+                   whtCouple + blkCouple, data=bwdt))
 ```
+
+$\pagebreak$
 
 ## 4  Diagnostic Assessments
 <!--
@@ -223,7 +233,7 @@ From the scatterplot matrix, we observe a major cluster of bivariate Gaussian di
 
 #### MLR.2: Random Sampling
 
-```{r}
+```{r,fig.width=12,fig.height=4.5,fig.align='center'}
 ggplot(melt(bwdt[,.(bwght,npvis,npvissq,monpre)]), aes(x=value)) +
     geom_histogram(bins=30) +
     facet_wrap(~variable, scales='free') +
@@ -234,7 +244,7 @@ From the histograms we observe that the sample has somewhat normally distributed
 
 #### MLR.3: No Perfect Collinearity
 
-```{r,fig.width=8,fig.height=8,fig.align='center'}
+```{r,fig.width=6,fig.height=6,fig.align='center'}
 par.orig <- par(no.readonly=T); par(mfrow=c(2,2)) # plot on 2x2
 
 scatter.smooth(jitter(bwdt$npvis), jitter(bwdt$monpre), pch=20, col=rgb(0,0,0,0.05))
@@ -247,13 +257,16 @@ cor(bwdt[,.(npvis,npvissq,monpre)], use='p')
 Scatter plot between the predictors show that collinearity is unlikely, though raw values show minor correlation. We ignore the expected `npvis`-`npvissq` correlation.
 
 #### MLR.4: Zero Conditional Mean
-```{r,fig.width=12,fig.height=12}
+
+```{r,fig.width=12,fig.height=12,fig.align='center'}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod1b)
 ```
 
 Looking at residuals v. fitted values plot, we see the residuals are not too well-behaved in terms of being in the proximity of 0. Remarkedly a potential problem is the apparently decreasing loess across increasing fitted values. Although this may also be caused by sparsity of points producing higher and lower fitted values, it may suggest that our model has overestimated the magnitude of some coefficients. However, given that we have large sample size, we argue for zero conditional mean from asymptotics.
+
+$\pagebreak$
 
 #### MLR.5: Homoskedasticity
 
@@ -265,19 +278,23 @@ From residual v. fitted values plot evidently the center of the plot forms a thi
 
 #### MLR.6: Normality
 
-```{r}
+```{r,fig.align='center'}
 hist(mod1b$residuals, breaks=50)
 ```
 
 Points at the either ends have slight departure from the theoretical Q-Q line towards 0 suggesting violation of normality, especially large on the lower end of quantile. Histogram of residuals however appears to be well-behaved and shows approximately normal distribution of residuals, despite the long left tail. To respond to this potential violation we again argue OLS asymptotics due to large sample.
 
+$\pagebreak$
+
 ### 4.2 Model 2
 
 #### MLR.1: Linear in Parameters
+
 No changes effect MLR.1, as defined by the our linear model construction.
 
 #### MLR.2: Random Sampling
-```{r}
+
+```{r,fig.width=12,fig.height=4,fig.align='center'}
 ggplot(melt(bwdt[,.(cigs,mage,magesq)]), aes(x=value)) +
     geom_histogram(bins=30) +
     facet_wrap(~variable, scales='free') +
@@ -289,15 +306,17 @@ bwdt[order(cigs),.N,by=cigs>0]
 Histograms of the `mage` and `magesq` variables look approximately normal. The `cigs` variable is mostly 0, with a marginal number of positive cases. Omitting `NA` cases of `cigs` shows about ~10% of mothers smoked at least 1 cigarette per day.
 
 #### MLR.3: No Perfect Collinearity
-```{r}
-cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='p')
+
+```{r,fig.align='center'}
+round(cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq)], use='p'), 5)
 sqrt(vif(mod2b))
 ```
 
 Aside from the expected correlation between `mage` and `magesq`, `npvis` and `npvissq`, there's no evidence of strong multicollinearity with the addition of `cigs`, `mage`, and `magesq`. The variance inflation factor of adding `cigs` is ~1%.
 
 #### MLR.4: Zero Conditional Mean
-```{r,fig.width=12,fig.height=12}
+
+```{r,fig.width=12,fig.height=12,fig.align='center'}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod2b)
@@ -306,26 +325,32 @@ plot(mod2b)
 There's no major difference in the residuals vs fitted values plot compared to model 1. The smoothing line still shows an approximate distribution of residuals about zero, with the same small grouping of values toward -3000. The distribution of residuals on the lower and higher ends of fitted values seem to get closer to 0, which is desirable compared to model 1.
 
 #### MLR.5: Homoskedasticity
+
 ```{r}
 bptest(mod2b)
 ```
 
 The Scale-Location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in $p<0.05$, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to $n=1832$ observations.
 
-
 #### MLR.6: Normality
+
 ```{r}
 shapiro.test(mod2b$residuals)
 ```
 
 The Normal Q-Q plot shows deviation from normal at lower theoretical quantiles, and similar to the Breusch-Pagan test, the high number of observations influences the Shapiro-Wilks test and rejects normality with very high significance. No changes from model 1 and $n=1832$ invokes CLT.
 
+$\pagebreak$
+
 ### 4.3 Model 3
 
 #### MLR.1: Linear in Parameters
+
 The parameters as observed in model 1 are all linear, the variables for the model are both dummy coded and contineous variables but the model parameters are still linear. 
+
 #### MLR.2: Random Sampling
-```{r}
+
+```{r,fig.align='center'}
   ggplot(melt(bwdt[,.(drink,whtCouple,blkCouple,othCouple,mixedCouple)]), aes(x=value)) +
     geom_histogram(bins=30) +
     facet_wrap(~variable, scales='free') +
@@ -342,9 +367,12 @@ Also the drinks variables has an extremely skewed sampling. Where most of the mo
 
 So for this model atleast which includes the race of the infant ($ White$, $black$, $other$ and $mixed$) and the drinking habits of the mother(only 16 samples of mother having drinks) the sampling does not seem to be random. 
 One can argue that the sampling of drink variable may be random as most of the mothers stop drinking during pregnancy, but still only 16 observations out of 1832 observations (which are not even normally distributed) is a small number for the model to be able to quantify the effects of drinking to infant's health and birthweight
+
 #### MLR.3: No Perfect Collinearity
+
 ```{r}
-x<-data.frame(cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq,drink,mixedCouple,whtCouple,blkCouple)], use='pairwise.complete.obs'))
+x<-data.frame(cor(bwdt[,.(bwght,npvis,npvissq,monpre,cigs,mage,magesq,drink,mixedCouple,
+                          whtCouple,blkCouple)], use='pairwise.complete.obs'))
 x[,c("drink","mixedCouple","whtCouple","blkCouple")]
 
 sqrt(vif(mod3b))
@@ -352,24 +380,34 @@ sqrt(vif(mod3b))
 
 As expected the couple variables show high collinearity with respective mother's and father's race as expected as the couple variables are derived from the respective father's and mother's race, as the correlation is greater than 0.9, So,we do not include them in a linear model. But none of the added variables show perfect collinearity with any of the variables. 
 
+$\pagebreak$
+
 #### MLR.4: Zero Conditional Mean
-```{r,fig.width=12,fig.height=12}
+
+```{r,fig.width=12,fig.height=12,fig.align='center'}
 par(mfrow=c(2,2)) # plot diagnostics on 2x2
 
 plot(mod3b)
 ```
+
 There's no major difference in the residuals vs fitted values plot compared to model 1. The smoothing line still shows an approximate distribution of residuals about zero, with the same small grouping of values toward -3000.
+
+$\pagebreak$
+
 #### MLR.5: Homoskedasticity
+
 ```{r}
-  bptest(mod3b)
+bptest(mod3b)
 ```
-The scale-location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in p<0.05, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to n=1832 observations. Which is similar to the first and second model. This must be same because the dependent variable is the same for all the models
+
+The Scale-Location plot also looks similar to model 1. The smoothing line is fairly consistent with a minor uptick at higher fitted values (x-axis). The Breusch-Pagan test results in $p<0.05$, rejecting the null hypothesis (homoskedasticity), however the strong statistical significance is likely due to $n=1832$ observations. Which is similar to the first and second model. This must be same because the dependent variable is the same for all the models
+
 #### MLR.6: Normality
 
 ```{r}
-  shapiro.test(mod3b$residuals)
+shapiro.test(mod3b$residuals)
 ```
-The qqplot is not on the diagonal and has tails. But the sample size is relatively large and thus assumtions 1 to 5 are sufficient for OLS regression as CLT can be invoked. The shapiro-wilks test usally tests positive (significant) for large samples.   
+The Q-Q plot is not on the diagonal and has tails. But the sample size is relatively large and thus assumtions 1 to 5 are sufficient for OLS regression as CLT can be invoked. The shapiro-wilks test usally tests positive (significant) for large samples.   
 
 ## 5  Model Summary
 <!--
@@ -430,14 +468,38 @@ Ultimately, we do not have a controlled experiment where the number of prenatal 
 
 The lack of randomization yields a significant reservation on the external validity of causal inference. As shown in our earlier EDA of indicator variables, over $87\%$ of observations belong to white male and female parents. Only $5.3\%$ of observations pertain to black male and female parents, while $4.4\%$ pertain to "other". The generalizability of a causal inference from this sample is limited.
 
-Given these limitations, the model developed in our analysis is associative rather than causal.
+An argument for these models to be causal would only hinge on the fact that we have precluded post-birth variables: the APGAR scores. However, all other evidences as described above override this argument. Given those limitations, the model developed in our analysis is associative rather than causal.
 
 
 ### 6.2 Omitted Variable Bias
 
-Infant's health can be dependent on various factors other than the race and smoking/ drinking habits. Some of the most important variables which would affect the infant's health may be regarding the mother's health condition. If the mother has been diagnosed with lifestyle diseases in particular like high blood pressure and diabetis. 
+```{r,fig.width=12,fig.height=4,fig.align='center'}
+par(mfcol=c(1,3))
 
-Similarly the daily work hour, if the mother is working and number of hours spent in travelling could be some minor but essential variables which could improve the model performance, and could also aid in causal interpretation of the model. 
+plot(mod1b, 1)
+plot(mod2b, 1)
+plot(mod3b, 1)
+
+#           Model 1                       Model 2                       Model 3
+```
+
+A recurring theme throughout all 3 of our models is that the loess in residuals v. fitted values show a somewhat negative slope. It is increasingly difficult to quantitatively analyze and forecast the effect of omitted variable bias as the model goes higher in dimensionality. Since this effect is present in all models, however, we will look at model 1. The coefficients in model 1 are positive with the exception of diminishing return variable `npvissq`, but we are suspicious that the coefficients given by our specification may have been too small on average. This is an indication that we may have omitted variables that are either:
+
+ * Negatively affecting birthweight but are positively correlated with number of visits and months between prenatal care start and birth, for example:
+    * Parents' blood/physiology test results of relevant markers
+    * Count of prior premature delivery or miscarriages
+    * Other indicators of presence of hereditary (genetic or epigenetic) disorders or any pre-existing conditions that increased parents' concern of the pregnancy, inducing frequent visits
+ * Positively affecting birthweight but are negatively correlated with number of visits and months between prenatal care start and birth, for example:
+    * Count of mother's previous successful births
+    * Average prior births' birthweight
+    * Parents' APGAR/birthweights
+    * Indicators of earlier successes or inherently healthy pregnancy
+    
+Other factors could also fall into the category above, or has less straightforward interaction with the variables that we included.
+
+Infant's health can be dependent on various factors other than race and smoking/drinking habits. Some of the most important variables which would affect the infant's health may be regarding the mother's health condition. If the mother has been diagnosed with lifestyle diseases in particular like high blood pressure and diabetes.
+
+Similarly the daily work hour, if the mother is working and number of hours spent in travelling could be some minor but essential variables which could improve the model performance, and could also aid in causal interpretation of the model.
 
 ### 6.3 Included Variable Bias
 
@@ -452,6 +514,6 @@ As for `mage`, it's not intuitive that the mother's age would correlate positive
 7. A brief conclusion with a few high-level takeaways.
 -->
 
-The supplied dataset is quite limited in the variation of APGAR scores, which we believe is the appropriate metric of infant health. As a proxy, we consider birthweight relative to the low and very low birthweight thresholds. The models we've constructed are associative in relating the number of prenatal vists to birthweight, due to endogeneity of the `npvis` variable with factors in the error term such as mother's general health and stress levels. Although we've leverged the greater variation in birthweight to better fit the OLS assumptions, it's still the case that the sample provided in this dataset consists mainly of healthy infants. The number of prenatal vists has a positive association with birthweight, but the mother's age is also positive with even greater magnitude. There are significant ethical considerations to performing a causality study of the effect of prenatal vists on infant health, which parallels the Tuskegee Syphillis debacle.
+The supplied dataset is quite limited in the variation of APGAR scores, which we believe is the appropriate metric of infant health. As a proxy, we consider birthweight relative to the low and very low birthweight thresholds. The models we've constructed are associative in relating the number of prenatal vists to birthweight, due to endogeneity of the `npvis` variable with factors in the error term such as mother's general health and stress levels. Although we've leverged the greater variation in birthweight to better fit the OLS assumptions, it's still the case that the sample provided in this dataset consists mainly of healthy infants. The number of prenatal vists has a positive association with birthweight, but the mother's age is also positive with even greater magnitude. There are significant ethical considerations to performing a causality study of the effect of prenatal vists on infant health, which parallels the Tuskegee Syphillis debacle. We also found some pointers for possible improvements of our models, by acquiring data on currently unavailable variables that we have discussed in more detail in our report. 
 
 <!-- Please limit all submissions to 30 pages.  Be sure to turn in both your pdf report and also your source code. -->
